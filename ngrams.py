@@ -1,4 +1,6 @@
-def build_ngrams(tokenized_sentence):
+from collections import Counter
+
+def buildNgrams(tokenized_sentence):
     # storing - key: ngram, value: count
     unigram_count = {}
     bigram_count = {}
@@ -21,15 +23,22 @@ def build_ngrams(tokenized_sentence):
         if i >= 2:
             trigram = (tokenized_sentence[i-2], tokenized_sentence[i-1], tokenized_sentence[i])
             trigram_count[trigram] = trigram_count.get(trigram, 0) + 1
-        
-        
-            
+
             
     return {
-        'Unigram': unigram_count,
-        'Bigram': bigram_count,
-        'Trigram':trigram_count
+        'Unigrams': unigram_count,
+        'Bigrams': bigram_count,
+        'Trigrams':trigram_count
     }
     
+def buildLibraryNGrams(tokenized_sentence):
+    unigrams = Counter(tokenized_sentence)
+    bigrams = Counter((tokenized_sentence[i], tokenized_sentence[i+1]) for i in range(len(tokenized_sentence)-1))
+    trigrams = Counter((tokenized_sentence[i], tokenized_sentence[i+1], tokenized_sentence[i+2]) for i in range(len(tokenized_sentence)-2))
     
-            
+    return {
+        'Unigrams': dict(unigrams),
+        'Bigrams': dict(bigrams),
+        'Trigrams': dict(trigrams)
+    }
+    
