@@ -28,3 +28,12 @@ def removePunctuation(text):
         
 def tokenize(text):
     return text.split()
+
+# corpus must be parsed through vrt parser first
+def flattenPreprocessCorpus(corpus):
+    flatten_corpus = []
+    for sentence in corpus:
+        preprocessed = preprocess(sentence) 
+        for word in preprocessed:
+            flatten_corpus.extend(word)
+    return flatten_corpus

@@ -53,3 +53,11 @@ def buildLibraryNGrams(tokenized_sentence):
         'Bigrams': dict(bigrams),
         'Trigrams': dict(trigrams)
     }
+
+def displayNGrams(ngrams):
+    print('--------------\nDisplaying N-Grams: \n\n')
+    for title, value in ngrams.items():
+        print(title)
+        for sub_value, count in value.items():
+            print(f'{sub_value}: {count}')
+        print('\n')
