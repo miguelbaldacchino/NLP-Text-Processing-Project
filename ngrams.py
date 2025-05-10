@@ -1,44 +1,55 @@
 from collections import Counter
 
 def buildNgrams(tokenized_sentence):
-    # storing - key: ngram, value: count
     unigram_count = {}
     bigram_count = {}
     trigram_count = {}
-    
-    # iterate sentences
-    for i in range(len(tokenized_sentence)):        # iterate words
-        # unigram
-        #   access word
+
+    for i in range(len(tokenized_sentence)):
+        # Unigram
         unigram = tokenized_sentence[i]
-        #   update unigram count
-        unigram_count[unigram] = unigram_count.get(unigram, 0) + 1 # handles keys that havent been initiated
-    
-        # bigram
+        unigram_count[unigram] = unigram_count.get(unigram, 0) + 1
+
+        # Bigram (no crossing sentence boundaries)
         if i >= 1:
-            bigram = (tokenized_sentence[i-1], tokenized_sentence[i])
-            bigram_count[bigram] = bigram_count.get(bigram, 0) + 1
+            if tokenized_sentence[i-1] != '</s>':
+                bigram = (tokenized_sentence[i-1], tokenized_sentence[i])
+                bigram_count[bigram] = bigram_count.get(bigram, 0) + 1
 
-        # trigram
+        # Trigram (no crossing sentence boundaries)
         if i >= 2:
-            trigram = (tokenized_sentence[i-2], tokenized_sentence[i-1], tokenized_sentence[i])
-            trigram_count[trigram] = trigram_count.get(trigram, 0) + 1
+            if (tokenized_sentence[i-2] != '</s>' and
+                tokenized_sentence[i-1] != '</s>'):
+                trigram = (tokenized_sentence[i-2], tokenized_sentence[i-1], tokenized_sentence[i])
+                trigram_count[trigram] = trigram_count.get(trigram, 0) + 1
 
-            
     return {
         'Unigrams': unigram_count,
         'Bigrams': bigram_count,
-        'Trigrams':trigram_count
+        'Trigrams': trigram_count
     }
-    
+
+
 def buildLibraryNGrams(tokenized_sentence):
     unigrams = Counter(tokenized_sentence)
-    bigrams = Counter((tokenized_sentence[i], tokenized_sentence[i+1]) for i in range(len(tokenized_sentence)-1))
-    trigrams = Counter((tokenized_sentence[i], tokenized_sentence[i+1], tokenized_sentence[i+2]) for i in range(len(tokenized_sentence)-2))
-    
+
+    # Bigram: skip if either token is </s>
+    bigrams = Counter(
+        (tokenized_sentence[i], tokenized_sentence[i+1])
+        for i in range(len(tokenized_sentence)-1)
+        if tokenized_sentence[i] != '</s>'
+    )
+
+    # Trigram: skip if any token is </s>
+    trigrams = Counter(
+        (tokenized_sentence[i], tokenized_sentence[i+1], tokenized_sentence[i+2])
+        for i in range(len(tokenized_sentence)-2)
+        if tokenized_sentence[i] != '</s>' and
+           tokenized_sentence[i+1] != '</s>'
+    )
+
     return {
         'Unigrams': dict(unigrams),
         'Bigrams': dict(bigrams),
         'Trigrams': dict(trigrams)
     }
-    

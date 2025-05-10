@@ -1,17 +1,12 @@
-def preprocess(text):
-    text = lowercase(text)
-    text = splitSentence(text)
-    
-    cleaned_sentences = []
-    for sentence in text:
-        sentence = removePunctuation(sentence)
-        tokens = tokenize(sentence)
+def preprocess(sentence):
+    cleaned_sentence = []
+    sentence = [removePunctuation(word) for word in sentence if tokenize(word) != '' and removePunctuation(word) != '']
         # skips empty lines
-        if tokens:
-            tokens = ['<s>'] + tokens + ['</s>']
-            cleaned_sentences.append(tokens)
+    if sentence:
+        sentence = ['<s>'] + sentence + ['</s>']
+        cleaned_sentence.append(sentence)
         
-    return cleaned_sentences
+    return cleaned_sentence
     
 
 def lowercase(text):
@@ -43,18 +38,17 @@ def splitSentence(text):
         
 def removePunctuation(text):
     # all punctuation characters
-    punctuation_chars = {'!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', 
+    punctuation_chars = {'!', '"', '#', '$', '%', '&', '(', ')', '*', '+', ',', 
                      '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', 
                      '_', '`', '{', '|', '}', '~'}
-    # current sentence being worked on
-    sentence = ''
+    # current word being worked on
+    word = ''
     
     for char in text:
         # filters out punct chars
         if char not in punctuation_chars:
-            sentence += char
-        
-    return sentence
+            word += char
+    return word
    
         
 def tokenize(text):
