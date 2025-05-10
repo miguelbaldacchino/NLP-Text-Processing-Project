@@ -7,34 +7,10 @@ def preprocess(sentence):
         cleaned_sentence.append(sentence)
         
     return cleaned_sentence
-    
 
 def lowercase(text):
     # lowercases every character
     return text.lower()
-    
-def splitSentence(text):
-    # sentence ending punctuation
-    sentence_endings = {'.', '!', '?'}
-    # stores sentences found
-    sentences = []
-    # current sentence being worked on
-    current_sentence = ''
-    
-    # for every character in parametered text
-    for char in text:
-        # if no sentence ending char, proceed
-        if char not in sentence_endings:
-            current_sentence += char
-        # else end of sentence found
-        else:
-            # handles empty instances of current_sentence
-            if current_sentence.strip():
-                sentences.append(current_sentence)
-                current_sentence = ''
-    if current_sentence.strip():
-        sentences.append(current_sentence)
-    return sentences
         
 def removePunctuation(text):
     # all punctuation characters
@@ -48,8 +24,7 @@ def removePunctuation(text):
         # filters out punct chars
         if char not in punctuation_chars:
             word += char
-    return word
-   
+    return word  
         
 def tokenize(text):
     return text.split()
