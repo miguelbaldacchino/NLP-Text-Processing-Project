@@ -44,7 +44,6 @@ def loadCorpus(folder_path, max_files=None):
             parsed.extend(vrtParser(file_path))
     return parsed
 
-# given 
 def splitCorpus(corpus, train_size = 0.8):
     random.shuffle(corpus)
     
