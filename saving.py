@@ -7,3 +7,4 @@ class savingData():
     def save(self, title, value):
         with open(f'models/{title}', 'wb') as f:
             pickle.dump(value, f)
+            print(f'Saved {title}')

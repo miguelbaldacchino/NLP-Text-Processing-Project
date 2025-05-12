@@ -42,6 +42,7 @@ def loadCorpus(folder_path, max_files=None):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
             parsed.extend(vrtParser(file_path))
+            print(f'Parsed {i}: {file_name}')
     return parsed
 
 def splitCorpus(corpus, train_size = 0.8):
