@@ -45,10 +45,12 @@ class VanillaLanguageModel:
             attempts += 1
 
             if len(sentence) == 1:
-                next_word = self.wordChosen(self.bigram_probs.get('<s>', {}))
+                dist = self.bigram_probs.get('<s>', {})
             else:
                 context = (sentence[-2], sentence[-1])
-                next_word = self.wordChosen(self.trigram_probs.get(context, {}))
+                dist = self.trigram_probs.get(context, {})
+
+            next_word = self.wordChosen(dist)
             
             if not next_word:
                 break
