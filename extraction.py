@@ -1,5 +1,6 @@
 from preprocessing import lowercase, tokenize
 import os
+import random
 
 # takes file by file
 def vrtParser(filepath):
@@ -42,3 +43,14 @@ def loadCorpus(folder_path, max_files=None):
         if os.path.isfile(file_path):
             parsed.extend(vrtParser(file_path))
     return parsed
+
+# given 
+def splitCorpus(corpus, train_size = 0.8):
+    random.shuffle(corpus)
+    
+    train_len = int(len(corpus) * train_size)
+    
+    train_sentences = corpus[:train_len]
+    test_sentences = corpus[train_len:]
+    
+    return train_sentences, test_sentences
