@@ -16,7 +16,7 @@ class VanillaLanguageModel:
         for (w1, w2), count in self.bigram_freqs.items():
             if w1 not in probs:
                 probs[w1] = {}
-            w1_count = self.unigram_freqs.get(w1, 1)  # Avoid division by 0
+            w1_count = self.unigram_freqs.get(w1, 0)  
             probs[w1][w2] = count / w1_count
         return probs
     
@@ -26,7 +26,7 @@ class VanillaLanguageModel:
             context = (w1, w2)
             if context not in probs:
                 probs[context] = {}
-            bigram_count = self.bigram_freqs.get((w1, w2), 1)  # Avoid division by 0
+            bigram_count = self.bigram_freqs.get((w1, w2), 0)  
             probs[context][w3] = count / bigram_count
         return probs
     

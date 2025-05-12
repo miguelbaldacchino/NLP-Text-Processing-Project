@@ -1,26 +1,15 @@
-from vrtparser import vrtParser
+from extraction import loadCorpus
 from preprocessing import flattenPreprocessCorpus
 from ngrams import buildNgrams, buildLibraryNGrams, displayNGrams
 import time
-import os
 from vanilla import VanillaLanguageModel
 
-folder_path = 'Maltese-Corpus'
-parsed = []
-
-current_file = 0 
-file_limit = 10 # choose number of files 
-for filename in os.listdir(folder_path):
-    file_path = os.path.join(folder_path, filename)
-    
-    # Check if it's a file (not a directory)
-    if os.path.isfile(file_path) and current_file <= file_limit:
-        parsed += vrtParser(file_path) 
-        current_file += 1
+parsed = loadCorpus('Maltese-Corpus', 5)
         
 for i, sentence in enumerate(parsed):
     if i <= 2:
         print(f'Sentence {i}: {sentence}\n')
+
 
 # flattens and preprocesses corpus
 flatten_corpus = flattenPreprocessCorpus(parsed)

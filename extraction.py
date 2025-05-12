@@ -1,4 +1,5 @@
 from preprocessing import lowercase, tokenize
+import os
 
 # takes file by file
 def vrtParser(filepath):
@@ -31,3 +32,13 @@ def vrtParser(filepath):
                 if word:  # Avoid empty strings
                     current_sentence.append(lowercase(word)) 
     return sentences
+
+def loadCorpus(folder_path, max_files=None):
+    parsed = []
+    for i, file_name in enumerate(os.listdir(folder_path)):
+        if max_files and i >= max_files:
+            break
+        file_path = os.path.join(folder_path, file_name)
+        if os.path.isfile(file_path):
+            parsed.extend(vrtParser(file_path))
+    return parsed
