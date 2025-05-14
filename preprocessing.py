@@ -33,6 +33,5 @@ def tokenize(text):
 def flattenCorpus(corpus):
     flatten_corpus = []
     for sentence in corpus:
-        for word in sentence:
-            flatten_corpus.extend(word)
+        flatten_corpus.extend(sentence)  # correct: appends words as whole tokens
     return flatten_corpus

@@ -44,12 +44,3 @@ class LaplaceLanguageModel(VanillaLanguageModel):
             probs[context][w3] = (count + 1) / denom
         return probs
     
-    def wordChosen(self, probabilities_dict):
-        # same as in VanillaLM
-        return super().wordChosen(probabilities_dict)
-    
-    def generateSentence(self, max_length=15, input_string=''):
-        return super().generateSentence(max_length, input_string)
-    
-    def linearInterpolation(self, sentence, l1, l2, l3):
-        return super().linearInterpolation(sentence, l1, l2, l3)

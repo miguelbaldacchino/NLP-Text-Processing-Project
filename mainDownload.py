@@ -22,8 +22,9 @@ mem_after_read = memory_usage()
 
 corpus = []
 for sentence in parsed:
-    corpus += preprocess(sentence)
-train_parsed, test_parsed = splitCorpus(corpus)
+    corpus.extend(preprocess(sentence))  # preserves list of token lists (sentences)
+
+train_parsed, test_parsed = splitCorpus(parsed)
 
 for i, sentence in enumerate(train_parsed):
     if i <= 2:
