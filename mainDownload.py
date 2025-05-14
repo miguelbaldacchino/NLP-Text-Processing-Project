@@ -1,5 +1,5 @@
 from extraction import loadCorpus, splitCorpus
-from preprocessing import flattenPreprocessCorpus
+from preprocessing import flattenCorpus, preprocess
 from ngrams import buildNgrams, buildLibraryNGrams, displayNGrams
 import time
 from laplace import LaplaceLanguageModel
@@ -20,7 +20,10 @@ parsed = loadCorpus('Maltese-Corpus', 10)
 end_read = time.perf_counter()
 mem_after_read = memory_usage()
 
-train_parsed, test_parsed = splitCorpus(parsed)
+corpus = []
+for sentence in parsed:
+    corpus += preprocess(sentence)
+train_parsed, test_parsed = splitCorpus(corpus)
 
 for i, sentence in enumerate(train_parsed):
     if i <= 2:
@@ -30,7 +33,7 @@ for i, sentence in enumerate(train_parsed):
 # flattens and preprocesses corpus
 mem_before_preprocess = memory_usage()
 start_preprocess = time.perf_counter()
-flatten_train = flattenPreprocessCorpus(train_parsed)
+flatten_train = flattenCorpus(train_parsed)
 print('Finished Preprocess')
 end_preprocess = time.perf_counter()
 mem_after_preprocess = memory_usage()
@@ -45,12 +48,12 @@ unk_train_corpus = replaceRareWords(train_parsed, train_words_count)
 print('Finished Replacing Rare Words')
 mem_after_replace = memory_usage()
 
-flatten_unk_train = flattenPreprocessCorpus(unk_train_corpus)
+flatten_unk_train = flattenCorpus(unk_train_corpus)
 
-flatten_test = flattenPreprocessCorpus(test_parsed)
+flatten_test = flattenCorpus(test_parsed)
 test_words_count = wordCounter(flatten_test)
 unk_test_corpus = replaceRareWords(test_parsed, test_words_count)
-flatten_unk_test = flattenPreprocessCorpus(unk_test_corpus)
+flatten_unk_test = flattenCorpus(unk_test_corpus)
 
 mem_before_ngram = memory_usage()
 start_manual = time.perf_counter()
@@ -73,11 +76,11 @@ saving_data.save('ngram_unk.pkl', unk_ngrams)
 
 saving_data.save('ngram.pkl', ngrams)
 
-saving_data.save('flatten_train.pkl', flatten_train)
-saving_data.save('flatten_test.pkl', flatten_test)
+saving_data.save('train.pkl', train_parsed)
+saving_data.save('test.pkl', test_parsed)
 
-saving_data.save('flatten_unk_train.pkl', flatten_unk_train)
-saving_data.save('flatten_unk_test.pkl', flatten_unk_test)
+saving_data.save('unk_train.pkl', unk_train_corpus)
+saving_data.save('unk_test.pkl', unk_test_corpus)
 
 model = LaplaceLanguageModel(unk_ngrams)
 for _ in range(5):  

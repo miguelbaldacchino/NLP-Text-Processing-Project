@@ -1,4 +1,5 @@
 import random
+import math
 from collections import defaultdict
 from preprocessing import tokenize, lowercase
 
@@ -44,7 +45,7 @@ class VanillaLanguageModel:
             return '</s>'
         return random.choices(words, weights=probabilities, k=1)[0]
     
-    def generateSentence(self, max_length=15, min_length=10, input_string=''):
+    def generateSentence(self, max_length=15, input_string=''):
         if isinstance(input_string, str):
             input_tokens = tokenize(input_string)
             sentence = []
@@ -83,46 +84,81 @@ class VanillaLanguageModel:
         return sentence[1:]
 
     
+    # handling start / end
     def linearInterpolation(self, sentence, l1=0.1, l2=0.3, l3=0.6):
-        
+        if not sentence:
+            return 1e-20, [], [], [], 0
         total_prob = 1.0
         uni_p = []
         bi_p = []
         tri_p = []
-        
+        addedS = 0
+        if sentence[0] != '<s>':
+            sentence = ['<s>'] + sentence
+            addedS += 1
+        if sentence[-1] != '</s>':
+            sentence = sentence + ['</s>']
+            addedS += 1
         for i in range(len(sentence)):
             w1 = sentence[i-2] if i >= 2 else None
             w2 = sentence[i-1] if i >= 1 else None
             w3 = sentence[i]
             
-            uni = self.unigram_probs.get(w3, 0.00000001)
-            bi = self.bigram_probs.get(w2, {}).get(w3, 0.00000001) if w2 else 0
-            tri = self.trigram_probs.get((w1, w2), {}).get(w3, 0.00000001) if w1 and w2 else 0
+            uni = self.unigram_probs.get(w3, 1e-20)
+            bi = self.bigram_probs.get(w2, {}).get(w3, 1e-20) if w2 else 0
+            tri = self.trigram_probs.get((w1, w2), {}).get(w3, 1e-20) if w1 and w2 else 0
 
             uni_p.append(uni)
             bi_p.append(bi)
             tri_p.append(tri)
             
             total_prob *= (l1 * uni) + (l2 * bi) + (l3 * tri)
-            
-        return total_prob, uni_p, bi_p, tri_p
+        
+        return total_prob, uni_p, bi_p, tri_p, addedS
+        
     
-    def probabilityTable(self, corpus): 
+    def perplexity(self, corpus): 
         prob_unigram = 0.0
+        total_uni = 0
         prob_bigram = 0.0
+        total_bi = 0
         prob_trigram = 0.0
+        total_tri = 0
         prob_interpolation = 0.0
+        total_inter = 0
+        
         for sentence in corpus:
-            prob, uni, bi, tri = self.linearInterpolation(sentence)
+            prob, uni, bi, tri, s = self.linearInterpolation(sentence)
             for probab in uni:
-                prob_unigram += probab
+                prob_unigram += math.log(probab if probab > 0 else 1e-20)
             for probab in bi:
-                prob_bigram += probab
+                prob_bigram += math.log(probab if probab > 0 else 1e-20)
             for probab in tri:
-                prob_trigram += probab
-            prob_interpolation += prob
-            
-            
+                prob_trigram += math.log(probab if probab > 0 else 1e-20)
+            prob_interpolation += math.log(prob if prob > 0 else 1e-20)
+            total_uni += len(uni)
+            total_bi += len(bi)
+            total_tri += len(tri) 
+            total_inter += len(sentence) + s
 
+        log_probs = [prob_unigram, prob_bigram, prob_trigram, prob_interpolation]
+        total_words = [total_uni, total_bi, total_tri, total_inter]
+        
+        perplexity = []
+        for i in range(4):
+            if total_words[i] == 0:
+                perplexity.append(float('inf'))
+            else:
+                perplexity.append(math.exp(-log_probs[i]/ total_words[i]))
+        return {
+            'Unigram': perplexity[0],
+            'Bigram': perplexity[1],
+            'Trigram': perplexity[2],
+            'Linear Interpolation': perplexity[3]
+        }
+            
+            
+# Perplexity Calculation
                     
+# Sentence Probability
         

@@ -48,8 +48,8 @@ class LaplaceLanguageModel(VanillaLanguageModel):
         # same as in VanillaLM
         return super().wordChosen(probabilities_dict)
     
-    def generateSentence(self, max_length=15, min_length=10, input_string=''):
-        return super().generateSentence(max_length=max_length, min_length=min_length, input_string=input_string)
+    def generateSentence(self, max_length=15, input_string=''):
+        return super().generateSentence(max_length, input_string)
     
     def linearInterpolation(self, sentence, l1, l2, l3):
         return super().linearInterpolation(sentence, l1, l2, l3)

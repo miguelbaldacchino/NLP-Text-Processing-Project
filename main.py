@@ -10,21 +10,22 @@ from pickles import retrieve
 #flatten_unk_test = retrieve('flatten_unk_test')
 
 #ngram = retrieve('ngram')
+test = retrieve('test')
 ngram_unk = retrieve('ngram_unk')
 ngram = retrieve('ngram')
 
 laplace = LaplaceLanguageModel(ngram_unk)
-for _ in range(3):  
-    sentence = laplace.generateSentence(input_string='fjura fid- dinja')
-    print("Laplace Generated:", sentence)
     
 vanilla = VanillaLanguageModel(ngram)
 for _ in range(3):  
     sentence = vanilla.generateSentence()
-    full_sentence = ''
-    for word in sentence:
-        full_sentence += word + ' '
-    print("Vanilla Generated:", full_sentence)
-    prob, _, _, _ = vanilla.linearInterpolation(full_sentence)
+    print("Vanilla Generated:", sentence)
+    prob, _, _, _, _ = vanilla.linearInterpolation(sentence)
     print('probability: ', prob)
-    
+for _ in range(3):  
+    sentence = vanilla.generateSentence(input_string='Shania Saliba nhobbha')
+    print("Vanilla Generated:", sentence)
+    prob, _, _, _, _ = vanilla.linearInterpolation(sentence)
+    print('probability: ', prob)
+
+print(vanilla.perplexity(test))    
