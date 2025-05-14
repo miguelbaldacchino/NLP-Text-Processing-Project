@@ -1,119 +1,30 @@
-from extraction import loadCorpus, splitCorpus
-from preprocessing import flattenPreprocessCorpus
-from ngrams import buildNgrams, buildLibraryNGrams, displayNGrams
-import time
 from laplace import LaplaceLanguageModel
-from unk import wordCounter, replaceRareWords
-from saving import savingData
-import psutil
-
-def memory_usage():
-    process = psutil.Process()
-    mem = process.memory_info().rss / 1024 / 1024  # Memory usage in MB
-    return mem
-
-saving_data = savingData()
-
-mem_before_read = memory_usage()
-start_read = time.perf_counter()
-parsed = loadCorpus('Maltese-Corpus', 10)
-end_read = time.perf_counter()
-mem_after_read = memory_usage()
-
-train_parsed, test_parsed = splitCorpus(parsed)
-
-for i, sentence in enumerate(train_parsed):
-    if i <= 2:
-        print(f'Sentence {i}: {sentence}\n')
-
+from vanilla import VanillaLanguageModel
+from pickles import retrieve
 
 # flattens and preprocesses corpus
-mem_before_preprocess = memory_usage()
-start_preprocess = time.perf_counter()
-flatten_train = flattenPreprocessCorpus(train_parsed)
-print('Finished Preprocess')
-end_preprocess = time.perf_counter()
-mem_after_preprocess = memory_usage()
 
-mem_before_count = memory_usage()
-train_words_count = wordCounter(flatten_train)
-print('Finished Word Count')
-mem_after_count = memory_usage()
+#flatten_train = retrieve('flatten_train')
+#flatten_test = retrieve('flatten_test')
+#flatten_unk_train = retrieve('flatten_unk_train')
+#flatten_unk_test = retrieve('flatten_unk_test')
 
-mem_before_replace = memory_usage()
-unk_train_corpus = replaceRareWords(train_parsed, train_words_count)
-print('Finished Replacing Rare Words')
-mem_after_replace = memory_usage()
+#ngram = retrieve('ngram')
+ngram_unk = retrieve('ngram_unk')
+ngram = retrieve('ngram')
 
-flatten_unk_train = flattenPreprocessCorpus(unk_train_corpus)
-
-flatten_test = flattenPreprocessCorpus(test_parsed)
-test_words_count = wordCounter(flatten_test)
-unk_test_corpus = replaceRareWords(test_parsed, test_words_count)
-flatten_unk_test = flattenPreprocessCorpus(unk_test_corpus)
-
-mem_before_ngram = memory_usage()
-start_manual = time.perf_counter()
-ngrams = buildNgrams(flatten_train)
-print('Finished building manual N-Gram')
-end_manual = time.perf_counter()
-mem_after_ngram = memory_usage()
-
-unk_ngrams = buildNgrams(flatten_unk_train)
-print('Finished building UNK N-Gram')
-
-mem_before_lib = memory_usage()    
-start_lib = time.perf_counter()
-ngramlib = buildLibraryNGrams(flatten_train)
-print('Finished building library N-Gram')
-end_lib = time.perf_counter()
-mem_after_lib = memory_usage()
-
-saving_data.save('unigram_unk.pkl', unk_ngrams['Unigrams'])
-saving_data.save('bigram_unk.pkl', unk_ngrams['Bigrams'])
-saving_data.save('trigram_unk.pkl', unk_ngrams['Trigrams'])
-
-saving_data.save('unigram.pkl', ngrams['Unigrams'])
-saving_data.save('bigram.pkl', ngrams['Bigrams'])
-saving_data.save('trigram.pkl', ngrams['Trigrams'])
-
-saving_data.save('flatten_train.pkl', flatten_train)
-saving_data.save('flatten_test.pkl', flatten_test)
-
-saving_data.save('flatten_unk_train.pkl', flatten_unk_train)
-saving_data.save('flatten_unk_test.pkl', flatten_unk_test)
-
-model = LaplaceLanguageModel(unk_ngrams)
-for _ in range(5):  
-    print("Generated:", model.generateSentence())
+laplace = LaplaceLanguageModel(ngram_unk)
+for _ in range(3):  
+    sentence = laplace.generateSentence(input_string='fjura fid- dinja')
+    print("Laplace Generated:", sentence)
     
-
-# Print time and memory usage
-print(f"Corpus N-Gram Timing:")
-print(f"Manual:  {(end_manual - start_manual)*1000:.4f} ms")
-print(f"Library: {(end_lib - start_lib)*1000:.4f} ms\n")
-
-print(f"Reading Corpus:")
-print(f"Time:  {(end_read - start_read)*1000:.4f} ms")
-print(f"Memory: {mem_after_read - mem_before_read:.4f} MB\n")
-
-print(f"Preprocessing Corpus:")
-print(f"Time:  {(end_preprocess - start_preprocess)*1000:.4f} ms")
-print(f"Memory Change: {mem_after_preprocess - mem_before_preprocess:.4f} MB\n")
-
-print(f"Word Counting:")
-print(f"Memory Change: {mem_after_count - mem_before_count:.4f} MB\n")
-
-print(f"Rare Word Replacement:")
-print(f"Memory Change: {mem_after_replace - mem_before_replace:.4f} MB\n")
-
-print(f"Manual N-Grams Generation:")
-print(f"Memory Change: {mem_after_ngram - mem_before_ngram:.4f} MB\n")
-
-print(f"Library N-Grams Generation:")
-print(f"Memory Change: {mem_after_lib - mem_before_lib:.4f} MB\n")
-
-print(f"Corpus size: {len(parsed)} sentences")
-print(f"Training Corpus size: {len(train_parsed)} sentences")
-print(f"Test Corpus size: {len(test_parsed)} sentences\n")
-
+vanilla = VanillaLanguageModel(ngram)
+for _ in range(3):  
+    sentence = vanilla.generateSentence()
+    full_sentence = ''
+    for word in sentence:
+        full_sentence += word + ' '
+    print("Vanilla Generated:", full_sentence)
+    prob, _, _, _ = vanilla.linearInterpolation(full_sentence)
+    print('probability: ', prob)
+    

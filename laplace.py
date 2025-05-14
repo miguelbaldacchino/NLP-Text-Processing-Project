@@ -1,4 +1,5 @@
 from vanilla import VanillaLanguageModel
+from preprocessing import tokenize, lowercase
 
 # As i understand it, 
 # add 1 to every numerator, add vocab_szize to every denominator, when calculating probs
@@ -8,14 +9,14 @@ from vanilla import VanillaLanguageModel
 class LaplaceLanguageModel(VanillaLanguageModel):
     def __init__(self, ngrams):
         # inherited raw counts, will override probs of vanilla
-        super().__init__(ngrams) 
+        super().__init__(ngrams, compute_probs=False) 
         
         self.N = sum(self.unigram_freqs.values())
         self.V = len(self.unigram_freqs)
         
-        self.laplace_unigram_probs = self.computeUnigramProbsLaplace()
-        self.laplace_bigram_probs = self.computeBigramProbsLaplace()
-        self.laplace_trigram_probs = self.computeTrigramProbsLaplace()
+        self.unigram_probs = self.computeUnigramProbsLaplace()
+        self.bigram_probs = self.computeBigramProbsLaplace()
+        self.trigram_probs = self.computeTrigramProbsLaplace()
         
     def computeUnigramProbsLaplace(self):
         denom = self.N + self.V
@@ -47,29 +48,8 @@ class LaplaceLanguageModel(VanillaLanguageModel):
         # same as in VanillaLM
         return super().wordChosen(probabilities_dict)
     
-    def generateSentence(self, max_length=15, min_length=10):
-        sentence = ['<s>']
-        attempts = 0
-        while len(sentence) < max_length and attempts < 100:
-            attempts += 1
-
-            if len(sentence) == 1:
-                dist = self.laplace_bigram_probs.get('<s>', {})
-            else:
-                context = (sentence[-2], sentence[-1])
-                dist = self.laplace_trigram_probs.get(context, {})
-
-            next_word = self.wordChosen(dist)
-
-            if not next_word:
-                break
-            if next_word == '</s>' and len(sentence) < min_length:
-                continue
-            if next_word.endswith('-'):
-                continue
-            if next_word == '</s>':
-                break
-            sentence.append(next_word)
-
-        return sentence[1:]
-
+    def generateSentence(self, max_length=15, min_length=10, input_string=''):
+        return super().generateSentence(max_length=max_length, min_length=min_length, input_string=input_string)
+    
+    def linearInterpolation(self, sentence, l1, l2, l3):
+        return super().linearInterpolation(sentence, l1, l2, l3)
