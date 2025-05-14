@@ -25,7 +25,8 @@ for _ in range(3):
     sentence = vanilla.generateSentence(input_string='Shania Saliba nħobbha')
     print("Vanilla Generated:", sentence)
     prob, _, _, _, _ = vanilla.linearInterpolation(sentence)
-    print('probability: ', prob)
+    print('interpolation: ', prob)
+    print('sentence probability:', vanilla.Sen_Probability(sentence) )
 
 print(vanilla.perplexity(test))    
 
@@ -40,6 +41,7 @@ for _ in range(3):
     print("Laplace Generated:", sentence)
     prob, _, _, _, _ = laplace.linearInterpolation(sentence)
     print('probability: ', prob)
+    print('sentence probability:', laplace.Sen_Probability(sentence) )
 print(laplace.perplexity(test))    
 
 unkmodel = UNKLanguageModel(ngram_unk)
@@ -53,4 +55,6 @@ for _ in range(3):
     print("UNK Generated:", sentence)
     prob, _, _, _, _ = unkmodel.linearInterpolation(sentence)
     print('probability: ', prob)
+    print('sentence probability:', unkmodel.Sen_Probability(sentence) )
+
 print(unkmodel.perplexity(test))   

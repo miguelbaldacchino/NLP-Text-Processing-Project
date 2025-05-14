@@ -43,3 +43,45 @@ class UNKLanguageModel(LaplaceLanguageModel):
             sentence.append(next_word)
 
         return sentence[1:]
+    
+    def Sen_Probability(self, sentence):
+        if isinstance(sentence, str):
+            sentence = tokenize(sentence)
+            sentence = [lowercase(token) for token in sentence]
+
+        sentence = [w if w in self.vocab else '<UNK>' for w in sentence]
+
+        # Add start/end tokens if needed
+        if sentence[0] != '<s>':
+            sentence = ['<s>'] + sentence
+        if sentence[-1] != '</s>':
+            sentence = sentence + ['</s>']
+
+        prob = 1.0
+
+        for i in range(len(sentence)):
+            w1 = sentence[i - 2] if i >= 2 else None
+            w2 = sentence[i - 1] if i >= 1 else None
+            w3 = sentence[i]
+
+            # Try trigram first
+            if w1 and w2:
+                context = (w1, w2)
+                prob_dict = self.trigram_probs.get(context, {})
+                p = prob_dict.get(w3, None)
+                if p is not None:
+                    prob *= p
+                    continue
+
+            # Fallback to bigram
+            if w2:
+                prob_dict = self.bigram_probs.get(w2, {})
+                p = prob_dict.get(w3, None)
+                if p is not None:
+                    prob *= p
+                    continue
+
+            # If both missing, fallback to very small value
+            prob *= 1e-20
+
+        return prob
