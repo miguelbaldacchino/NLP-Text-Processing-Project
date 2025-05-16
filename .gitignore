@@ -1,1 +1,6 @@
 Maltese-Corpus/
+models/
+/models
+/models
+models/ngram_unk.pkl
+*.pkl
