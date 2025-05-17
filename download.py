@@ -131,3 +131,12 @@ print(f"\nN-Gram Timing Comparison:")
 print(f"Manual  N-Gram Time: {manual_time:.4f} seconds")
 print(f"Library N-Gram Time: {library_time:.4f} seconds")
 print(f"Speedup (Library / Manual): {speedup:.2f}x")
+
+print(f"Total sentences after preprocessing: {len(corpus)}")
+# --- Word and Vocabulary Statistics ---
+word_count = sum(len(sentence) for sentence in corpus)
+vocab = set(word for sentence in corpus for word in sentence)
+vocab_size = len(vocab)
+
+print(f"Total number of words: {word_count}")
+print(f"Vocabulary size: {vocab_size}")

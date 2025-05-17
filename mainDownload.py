@@ -33,11 +33,4 @@ mem_after = memory_usage()
 stats['Preprocessing'] = (end - start, mem_after - mem_before)
 print('done')
 
-print(f"Total sentences after preprocessing: {len(corpus)}")
-# --- Word and Vocabulary Statistics ---
-word_count = sum(len(sentence) for sentence in corpus)
-vocab = set(word for sentence in corpus for word in sentence)
-vocab_size = len(vocab)
 
-print(f"Total number of words: {word_count}")
-print(f"Vocabulary size: {vocab_size}")
