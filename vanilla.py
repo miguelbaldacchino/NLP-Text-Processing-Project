@@ -1,7 +1,6 @@
 import random
 import math
-from collections import defaultdict
-from preprocessing import tokenize, lowercase, preprocess
+from preprocessing import tokenize, lowercase, preprocess, removePunctuation
 
 class VanillaLanguageModel:
     def __init__(self, ngrams, compute_probs=True):
@@ -46,16 +45,20 @@ class VanillaLanguageModel:
         return random.choices(words, weights=probabilities, k=1)[0]
     
     def generateSentence(self, max_length=15, input_string=''):
+
         if isinstance(input_string, str):
             input_tokens = tokenize(input_string)
             sentence = []
             for token in input_tokens:
                 token = lowercase(token)
-                sentence.append(token)
+                token = removePunctuation(token)
+                if token:  
+                    sentence.append(token)
             input_tokens = sentence
         else:
-            input_tokens = input_string
-        
+            # Assume already list of tokens, but still process for safety
+            input_tokens = [removePunctuation(lowercase(token)) for token in input_string if removePunctuation(lowercase(token)) != '']
+
         sentence = ['<s>'] + input_tokens
         attempts = 0
         while len(sentence) < max_length and attempts < 100:  # loop limit
@@ -68,7 +71,7 @@ class VanillaLanguageModel:
                 trigram_context = (sentence[-2], sentence[-1])
                 dict = self.trigram_probs.get(trigram_context, {})
                 if not dict:
-                    # Fallback to bigram using the last word
+                    # fallback to bigram using the last word
                     dict = self.bigram_probs.get(sentence[-1], {})
             
             next_word = self.wordChosen(dict)
@@ -83,11 +86,22 @@ class VanillaLanguageModel:
 
         return sentence[1:]
 
+
     
-    # handling start / end
-    def linearInterpolation(self, sentence, l1=0.1, l2=0.3, l3=0.6):
+    def linearInterpolation(self, sentence, l1=0.1, l2=0.3, l3=0.6, preprocessed=False):
         if not sentence:
             return 1e-20, [], [], [], 0
+        if not preprocessed:
+            if isinstance(sentence, str):
+                sentence = tokenize(lowercase(sentence))
+            else:
+                # assume already list of tokens; lowercase each
+                sentence = [lowercase(w) for w in sentence]
+            cleaned = preprocess(sentence)
+            if not cleaned:
+                return 1e-20, [], [], [], 0
+            # take the first (and only) cleaned sentence for scoring
+            sentence = cleaned[0]
         total_prob = 1.0
         uni_p = []
         bi_p = []
@@ -163,7 +177,7 @@ class VanillaLanguageModel:
             sentence = tokenize(sentence)
             sentence = [lowercase(token) for token in sentence]
 
-        # Add start/end tokens if needed
+        # add start/end tokens if needed
         if sentence[0] != '<s>':
             sentence = ['<s>'] + sentence
         if sentence[-1] != '</s>':
@@ -176,7 +190,7 @@ class VanillaLanguageModel:
             w2 = sentence[i - 1] if i >= 1 else None
             w3 = sentence[i]
 
-            # Try trigram first
+            # try trigram first
             if w1 and w2:
                 context = (w1, w2)
                 prob_dict = self.trigram_probs.get(context, {})
@@ -185,7 +199,7 @@ class VanillaLanguageModel:
                     prob *= p
                     continue
 
-            # Fallback to bigram
+            # fallback to bigram
             if w2:
                 prob_dict = self.bigram_probs.get(w2, {})
                 p = prob_dict.get(w3, None)
@@ -193,7 +207,7 @@ class VanillaLanguageModel:
                     prob *= p
                     continue
 
-            # If both missing, fallback to very small value
+            # if both missing, fallback to very small value
             prob *= 1e-20
 
         return prob

@@ -1,8 +1,8 @@
 from laplace import LaplaceLanguageModel
-from preprocessing import tokenize, lowercase
-from preprocessing import flattenCorpus
-from unk import replaceRareWords, wordCounter
+from preprocessing import tokenize, lowercase, preprocess, removePunctuation
 
+
+# Note: At this stage, removing unseen words satisfies the count <= 2 rule, since the corpus has already had his <UNK> replacing, meaning whatever words arent in vocab also satisfy this rule.
 class UNKLanguageModel(LaplaceLanguageModel):
     def __init__(self, ngrams):
         super().__init__(ngrams)
@@ -11,11 +11,18 @@ class UNKLanguageModel(LaplaceLanguageModel):
     def generateSentence(self, max_length=15, input_string=''):
         if isinstance(input_string, str):
             input_tokens = tokenize(input_string)
-            input_tokens = [lowercase(token) for token in input_tokens]
+            sentence = []
+            for token in input_tokens:
+                token = lowercase(token)
+                token = removePunctuation(token)
+                if token:  
+                    sentence.append(token)
+            input_tokens = sentence
         else:
-            input_tokens = input_string
+            input_tokens = [removePunctuation(lowercase(token)) for token in input_string if removePunctuation(lowercase(token)) != '']
 
-        # Replace unseen tokens with <UNK>
+
+        # replace unseen tokens with <UNK>
         input_tokens = [w if w in self.vocab else '<UNK>' for w in input_tokens]
 
         sentence = ['<s>'] + input_tokens
@@ -51,7 +58,7 @@ class UNKLanguageModel(LaplaceLanguageModel):
 
         sentence = [w if w in self.vocab else '<UNK>' for w in sentence]
 
-        # Add start/end tokens if needed
+        # add start/end tokens if needed
         if sentence[0] != '<s>':
             sentence = ['<s>'] + sentence
         if sentence[-1] != '</s>':
@@ -64,7 +71,7 @@ class UNKLanguageModel(LaplaceLanguageModel):
             w2 = sentence[i - 1] if i >= 1 else None
             w3 = sentence[i]
 
-            # Try trigram first
+            # try trigram first
             if w1 and w2:
                 context = (w1, w2)
                 prob_dict = self.trigram_probs.get(context, {})
@@ -73,7 +80,7 @@ class UNKLanguageModel(LaplaceLanguageModel):
                     prob *= p
                     continue
 
-            # Fallback to bigram
+            # fallback to bigram
             if w2:
                 prob_dict = self.bigram_probs.get(w2, {})
                 p = prob_dict.get(w3, None)
@@ -81,7 +88,51 @@ class UNKLanguageModel(LaplaceLanguageModel):
                     prob *= p
                     continue
 
-            # If both missing, fallback to very small value
+            # if both missing, fallback to very small value
             prob *= 1e-20
 
         return prob
+    
+    def linearInterpolation(self, sentence, l1=0.1, l2=0.3, l3=0.6, preprocessed=False):
+        if not sentence:
+            return 1e-20, [], [], [], 0
+        if not preprocessed:
+            # lowercase and tokenize first
+            if isinstance(sentence, str):
+                sentence = tokenize(lowercase(sentence))
+            else:
+                # assume already list of tokens; lowercase each
+                sentence = [lowercase(w) for w in sentence]
+            cleaned = preprocess(sentence)
+            if not cleaned:
+                return 1e-20, [], [], [], 0
+            # take the first (and only) cleaned sentence for scoring
+            sentence = cleaned[0]
+        sentence = [w if w in self.vocab else '<UNK>' for w in sentence]
+        total_prob = 1.0
+        uni_p = []
+        bi_p = []
+        tri_p = []
+        addedS = 0
+        if sentence[0] != '<s>':
+            sentence = ['<s>'] + sentence
+            addedS += 1
+        if sentence[-1] != '</s>':
+            sentence = sentence + ['</s>']
+            addedS += 1
+        for i in range(len(sentence)):
+            w1 = sentence[i-2] if i >= 2 else None
+            w2 = sentence[i-1] if i >= 1 else None
+            w3 = sentence[i]
+            
+            uni = self.unigram_probs.get(w3, 1e-20)
+            bi = self.bigram_probs.get(w2, {}).get(w3, 1e-20) if w2 else 0
+            tri = self.trigram_probs.get((w1, w2), {}).get(w3, 1e-20) if w1 and w2 else 0
+
+            uni_p.append(uni)
+            bi_p.append(bi)
+            tri_p.append(tri)
+            
+            total_prob *= (l1 * uni) + (l2 * bi) + (l3 * tri)
+        
+        return total_prob, uni_p, bi_p, tri_p, addedS

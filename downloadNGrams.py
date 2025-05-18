@@ -9,134 +9,127 @@ import psutil
 
 def memory_usage():
     process = psutil.Process()
-    return process.memory_info().rss / 1024 / 1024  # MB
+    return process.memory_info().rss / 1024 / 1024  # in MB
+
+def print_section(title):
+    print(f"\n{'='*10} {title} {'='*10}")
 
 saving_data = savingData()
 stats = {}
-# --- Corpus Reading ---
+
+print_section("Corpus Reading")
 mem_before = memory_usage()
 start = time.perf_counter()
-parsed = loadCorpus('Maltese-Corpus', 300)
+parsed = loadCorpus('Maltese-Corpus', 3)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['Corpus Read'] = (end - start, mem_after - mem_before)
-print('done')
+print("Corpus successfully loaded.")
 
-# --- Preprocessing ---
+print_section("Preprocessing")
 mem_before = memory_usage()
 start = time.perf_counter()
-corpus = []
-for sentence in parsed:
-    corpus.extend(preprocess(sentence))
+corpus = [word for sentence in parsed for word in preprocess(sentence)]
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['Preprocessing'] = (end - start, mem_after - mem_before)
-print('done')
+print("Preprocessing complete.")
 
-# --- Splitting ---
+print_section("Splitting Corpus")
 train_parsed, test_parsed = splitCorpus(corpus)
-print('done')
+print("Training and testing data split.")
 
-# --- Flatten Training Corpus ---
+print_section("Flattening Training Corpus")
 mem_before = memory_usage()
 start = time.perf_counter()
 flatten_train = flattenCorpus(train_parsed)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['Flatten Train'] = (end - start, mem_after - mem_before)
-print('done')
+print("Training corpus flattened.")
 
-# --- Word Count ---
+print_section("Word Counting")
 mem_before = memory_usage()
 start = time.perf_counter()
 train_words_count = wordCounter(flatten_train)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['Word Count'] = (end - start, mem_after - mem_before)
-print('done')
+print("Word counting complete.")
 
-# --- Replace Rare Words (UNK) ---
+print_section("Replacing Rare Words with UNK")
 mem_before = memory_usage()
 start = time.perf_counter()
 unk_train_corpus = replaceRareWords(train_parsed, train_words_count)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['UNK Replacement'] = (end - start, mem_after - mem_before)
-print('done')
+print("UNK replacement done.")
 
-# --- Flatten UNK Corpus ---
+print_section("Flattening UNK Corpus")
 flatten_unk_train = flattenCorpus(unk_train_corpus)
-print('done')
+print("UNK corpus flattened.")
 
-# --- Build Manual N-Gram ---
+print_section("Building Manual N-Gram")
 mem_before = memory_usage()
 start = time.perf_counter()
 ngrams = buildNgrams(flatten_train)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['Manual N-Gram'] = (end - start, mem_after - mem_before)
-print('done')
+print("Manual N-gram model built.")
 
-# --- Build UNK N-Gram ---
+print_section("Building UNK N-Gram")
 mem_before = memory_usage()
 start = time.perf_counter()
 unk_ngrams = buildNgrams(flatten_unk_train)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['UNK N-Gram'] = (end - start, mem_after - mem_before)
-print('done')
+print("UNK N-gram model built.")
 
-# --- Build Library N-Gram ---
+print_section("Building Library N-Gram")
 mem_before = memory_usage()
 start = time.perf_counter()
 ngramlib = buildLibraryNGrams(flatten_train)
 end = time.perf_counter()
 mem_after = memory_usage()
 stats['Library N-Gram'] = (end - start, mem_after - mem_before)
-print('done')
+print("Library N-gram model built.")
 
-# --- Flatten Test + Replace UNK ---
+print_section("Processing Test Data")
 flatten_test = flattenCorpus(test_parsed)
 test_words_count = wordCounter(flatten_test)
 unk_test_corpus = replaceRareWords(test_parsed, test_words_count)
 flatten_unk_test = flattenCorpus(unk_test_corpus)
-print('done')
+print("Test data processed and UNK replaced.")
 
-# --- Save Pickled Files ---
+print_section("Saving Data")
 saving_data.save('ngram_unk.pkl', unk_ngrams)
 saving_data.save('ngram.pkl', ngrams)
 saving_data.save('train.pkl', train_parsed)
 saving_data.save('test.pkl', test_parsed)
 saving_data.save('unk_train.pkl', unk_train_corpus)
 saving_data.save('unk_test.pkl', unk_test_corpus)
-print('done')
+print("All models and corpora saved.")
 
-# --- Generate Sample Sentences from Laplace Model ---
-print("\nLaplace Model Sample Generation:\n")
-model = LaplaceLanguageModel(unk_ngrams)
-for _ in range(5):  
-    print("Generated:", model.generateSentence())
-
-# --- Summary Report ---
-print("\n--- TIME & MEMORY USAGE REPORT (in seconds and MB) ---")
+print_section("TIME & MEMORY USAGE REPORT")
 for stage, (time_sec, mem_mb) in stats.items():
-    print(f"{stage:25} | Time: {time_sec:.2f}s | Memory Change: {mem_mb:.2f}MB")
+    print(f"{stage} | Time: {time_sec:.2f}s | Memory Change: {mem_mb:.2f}MB")
 
-# --- N-Gram Comparison ---
+print_section("N-GRAM TIMING COMPARISON")
 manual_time = stats['Manual N-Gram'][0]
 library_time = stats['Library N-Gram'][0]
-speedup = library_time / manual_time if library_time else float('inf')
-
-print(f"\nN-Gram Timing Comparison:")
-print(f"Manual  N-Gram Time: {manual_time:.4f} seconds")
+speedup = library_time / manual_time if manual_time else float('inf')
+print(f"Manual N-Gram Time : {manual_time:.4f} seconds")
 print(f"Library N-Gram Time: {library_time:.4f} seconds")
 print(f"Speedup (Library / Manual): {speedup:.2f}x")
 
-print(f"Total sentences after preprocessing: {len(corpus)}")
-# --- Word and Vocabulary Statistics ---
-word_count = sum(len(sentence) for sentence in corpus)
+print_section("CORPUS STATISTICS")
+total_sentences = len(corpus)
+total_words = sum(len(sentence) for sentence in corpus)
 vocab = set(word for sentence in corpus for word in sentence)
 vocab_size = len(vocab)
-
-print(f"Total number of words: {word_count}")
+print(f"Total sentences after preprocessing: {total_sentences}")
+print(f"Total number of words: {total_words}")
 print(f"Vocabulary size: {vocab_size}")
